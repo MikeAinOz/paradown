@@ -27,8 +27,8 @@
 
 import "core-js/stable";
 import * as d3select from 'd3-selection';
-import * as dataForge from 'data-forge';
-import 'data-forge-fs'; 
+import { saveAs } from 'file-saver';
+import * as ObjectsToCsv from 'objects-to-csv'
 import "./../style/visual.less";
 import powerbi from "powerbi-visuals-api";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
@@ -105,11 +105,28 @@ export class Visual implements IVisual {
 // Button
         let dButton:HTMLInputElement = document.createElement("input");
         dButton.setAttribute('type', "submit");
-        dButton.setAttribute('value', "Download");
+        dButton.setAttribute('value', "Download CSV");
         dButton.setAttribute('id',"bDownload");
         dButton.onclick = function(){
-            let df = new dataForge.DataFrame(table.rows)
-            df.asCSV().writeFileSync('paradown.csv');
+            let headers = []
+            table.columns.forEach(
+                (col) => {
+                    headers.push(col.displayName);
+                })
+            let downloadtable = []
+            downloadtable.push(headers)
+            
+            table.rows.forEach(
+                (row) => {
+                    downloadtable.push(row)
+                }
+            )
+            
+            let download = JSON.stringify(downloadtable);
+            let blob = new Blob([download], {type: "text/plain;charset=utf-8"});
+            console.log('Attempt Save!');
+            saveAs(blob, "pbidownload.json");
+            
         };
         this.container.append(function() { return dButton; });
         
