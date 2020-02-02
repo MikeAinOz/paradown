@@ -1,7 +1,19 @@
-ptable, th, td {
+table {
+    border-collapse: collapse;
+    overflow-y: scroll;    // use auto; or scroll; to allow vertical scrolling; 
+   // overflow-x: hidden;    // disable horizontal scroll 
+    scroll-behavior: smooth;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    height: 90%;
+  }
+table, th, td {
     border: 1px solid;
 }
-
 th, td {
-    padding: 15px;
+    padding: 5px;
+}
+input {
+    margin: 5px;
 }

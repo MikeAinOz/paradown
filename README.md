@@ -1,7 +1,7 @@
 # paradown
 Paradigm BI Table Download Custom Visual
 
-This is a test D3 Table visual with File-Saver added - purely experimental at this stage
+This is a D3 Table visual with File-Saver added - tested in Chrome
 
 https://www.npmjs.com/package/file-saver
 

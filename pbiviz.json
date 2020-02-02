@@ -5,17 +5,17 @@
         "guid": "paradown138896F852314EEA9A647771C1C56FC1",
         "visualClassName": "Visual",
         "version": "1.0.0",
-        "description": "",
-        "supportUrl": "",
-        "gitHubUrl": ""
+        "description": "Paradigm BI Table dowload visual",
+        "supportUrl": "https://paradigmbi.com.au",
+        "gitHubUrl": "https://github.com/MikeAinOz/paradown"
     },
     "apiVersion": "2.6.0",
     "author": {
-        "name": "",
-        "email": ""
+        "name": "Mike Allen",
+        "email": "mike@mikeallen.com.au"
     },
     "assets": {
-        "icon": "assets/icon.png"
+        "icon": "assets/ParadownIcon.png"
     },
     "externalJS": [],
     "style": "style/visual.less",

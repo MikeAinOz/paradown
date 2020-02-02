@@ -45,4 +45,3 @@ export class VisualSettings extends DataViewObjectsParser {
      // Text Size
       public fontSize: number = 12;
      }
-

@@ -28,7 +28,6 @@
 import "core-js/stable";
 import * as d3select from 'd3-selection';
 import { saveAs } from 'file-saver';
-import * as ObjectsToCsv from 'objects-to-csv'
 import "./../style/visual.less";
 import powerbi from "powerbi-visuals-api";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
@@ -44,12 +43,17 @@ export class Visual implements IVisual {
    
     private settings: VisualSettings;
     private container: d3.Selection<any, any, any, any>;
+    private tablecontainer: d3.Selection<any, any, any, any>;
 
     constructor(options: VisualConstructorOptions) {
         console.log('Visual constructor', options);
         
         /** Visual container */
         this.container = d3select.select(options.element)
+          .append('div')
+          .append('input')
+            .attr('id',"bDownload")
+        this.tablecontainer = d3select.select(options.element)
             .append('table');  
     }
 
@@ -57,7 +61,7 @@ export class Visual implements IVisual {
         this.settings = Visual.parseSettings(options && options.dataViews && options.dataViews[0]);
         console.log('Visual update', options);
         /** Clear down existing plot */
-        this.container.selectAll('*').remove();
+        this.tablecontainer.selectAll('*').remove();
 
         /** Test 1: Data view has valid bare-minimum entries */
         let dataViews = options.dataViews;    
@@ -74,10 +78,9 @@ export class Visual implements IVisual {
         }
     
     /** If we get this far, we can trust that we can work with the data! */
-        let table = dataViews[0].table;
-
+        let table = dataViews[0].table;       
     /** Add table heading row and columns */
-        let tHead = this.container
+        let tHead = this.tablecontainer
             .append('tr');
         table.columns.forEach(
             (col) => {
@@ -90,24 +93,28 @@ export class Visual implements IVisual {
     /** Now add rows and columns for each row of data */
         table.rows.forEach(
             (row) => {
-                let tRow = this.container
+                let tRow = this.tablecontainer
                     .append('tr');
                 row.forEach(
                     (col) => {
-                        tRow
+                        if (col)
+                        {tRow
                             .append('td')
-                                .text(col.toString());
+                                .text(col.toString())}
+                        else
+                        {tRow
+                            .append('td')
+                                .text("")}
                     }
                 )
             }
         );
         console.log('Table rendered!');
 // Button
-        let dButton:HTMLInputElement = document.createElement("input");
-        dButton.setAttribute('type', "submit");
-        dButton.setAttribute('value', "Download CSV");
-        dButton.setAttribute('id',"bDownload");
-        dButton.onclick = function(){
+        let dButton = d3select.select('#bDownload')
+            .attr('type', "submit")
+            .attr('value', "Download CSV")
+        .on ('click' , function(){
             let headers = []
             table.columns.forEach(
                 (col) => {
@@ -122,13 +129,31 @@ export class Visual implements IVisual {
                 }
             )
             
-            let download = JSON.stringify(downloadtable);
+            //let download = JSON.stringify(downloadtable);
+            let download = ConvertToCSV(downloadtable)
             let blob = new Blob([download], {type: "text/plain;charset=utf-8"});
             console.log('Attempt Save!');
-            saveAs(blob, "pbidownload.json");
+            saveAs(blob, "pbidownload.csv");
             
-        };
-        this.container.append(function() { return dButton; });
+        });
+     // JSON to CSV Converter
+     function ConvertToCSV(objArray) {
+        let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+        let str = '';
+
+        for (let i = 0; i < array.length; i++) {
+            let line = '';
+            for (var index in array[i]) {
+                if (line != '') line += ','
+
+                line += array[i][index];
+            }
+
+            str += line + '\r\n';
+        }
+
+        return str;
+    }   
         
     }
 
