@@ -57,6 +57,11 @@
         {
             "table": {
                 "rows": {
+                    "dataReductionAlgorithm": {
+                        "top": {
+                            "count": 30000
+                        }  
+                      },
                     "for": {
                         "in": "values"
                     }
