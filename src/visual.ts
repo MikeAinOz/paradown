@@ -49,12 +49,13 @@ export class Visual implements IVisual {
         console.log('Visual constructor', options);
         
         /** Visual container */
-        this.container = d3select.select(options.element)
-          .append('div')
-          .append('input')
-            .attr('id',"bDownload")
-        this.tablecontainer = d3select.select(options.element)
-            .append('table');  
+        this.container = d3select.select(options.element);
+        this.container.append('div')
+            .append('input')
+                .attr('id',"bDownload");
+
+        this.tablecontainer = this.container
+            .append('div');
     }
 
     public update(options: VisualUpdateOptions) {
@@ -78,38 +79,47 @@ export class Visual implements IVisual {
         }
     
     /** If we get this far, we can trust that we can work with the data! */
-        let table = dataViews[0].table;       
-    /** Add table heading row and columns */
-        let tHead = this.tablecontainer
-            .append('tr');
-        table.columns.forEach(
-            (col) => {
-                tHead
-                    .append('th')
-                        .text(col.displayName);
-            }
-        );
+        let table = dataViews[0].table;
+        
+    /** Only show the table if we want to - perf. gets a bit unpredictable with a lot of data */
+        if (this.settings.table.show) {
 
-    /** Now add rows and columns for each row of data */
-        table.rows.forEach(
-            (row) => {
-                let tRow = this.tablecontainer
+                let domTable = this.tablecontainer.append('table');
+
+            /** Add table heading row and columns */
+                let tHead = domTable
                     .append('tr');
-                row.forEach(
+
+                table.columns.forEach(
                     (col) => {
-                        if (col)
-                        {tRow
-                            .append('td')
-                                .text(col.toString())}
-                        else
-                        {tRow
-                            .append('td')
-                                .text("")}
+                        tHead
+                            .append('th')
+                                .text(col.displayName);
                     }
-                )
-            }
-        );
-        console.log('Table rendered!');
+                );
+
+            /** Now add rows and columns for each row of data */
+                table.rows.forEach(
+                    (row) => {
+                        let tRow = domTable
+                            .append('tr');
+                        row.forEach(
+                            (col) => {
+                                if (col) {
+                                    tRow
+                                        .append('td')
+                                            .text(col.toString())
+                                } else {
+                                    tRow
+                                        .append('td')
+                                            .text("")}
+                            }
+                        )
+                    }
+                );
+                console.log('Table rendered!');
+        }
+    
 // Button
         let dButton = d3select.select('#bDownload')
             .attr('type', "submit")
