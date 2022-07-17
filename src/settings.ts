@@ -25,7 +25,8 @@
  */
 
 "use strict";
-
+//import powerbi from "powerbi-visuals-api";
+//import DataViewObjectsParser = powerbi.extensibility.utils.dataview.DataViewObjectsParser;
 import { dataViewObjectsParser } from "powerbi-visuals-utils-dataviewutils";
 import DataViewObjectsParser = dataViewObjectsParser.DataViewObjectsParser;
 

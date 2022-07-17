@@ -27,7 +27,7 @@
 
 import "core-js/stable";
 import * as d3select from 'd3-selection';
-import { saveAs } from 'file-saver';
+// https://docs.microsoft.com/en-us/power-bi/developer/visuals/file-download-api
 import "./../style/visual.less";
 import powerbi from "powerbi-visuals-api";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
@@ -37,22 +37,23 @@ import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInst
 import VisualObjectInstance = powerbi.VisualObjectInstance;
 import DataView = powerbi.DataView;
 import VisualObjectInstanceEnumerationObject = powerbi.VisualObjectInstanceEnumerationObject;
-
+import IDownloadService = powerbi.extensibility.IDownloadService;
 import { VisualSettings } from "./settings";
 export class Visual implements IVisual {
-   
+
     private settings: VisualSettings;
     private container: d3.Selection<any, any, any, any>;
     private tablecontainer: d3.Selection<any, any, any, any>;
+    private static downloadService: IDownloadService;
 
     constructor(options: VisualConstructorOptions) {
         console.log('Visual constructor', options);
-        
+        Visual.downloadService = options.host.downloadService;
         /** Visual container */
         this.container = d3select.select(options.element);
         this.container.append('div')
             .append('input')
-                .attr('id',"bDownload");
+            .attr('id', "bDownload");
 
         this.tablecontainer = this.container
             .append('div');
@@ -65,7 +66,7 @@ export class Visual implements IVisual {
         this.tablecontainer.selectAll('*').remove();
 
         /** Test 1: Data view has valid bare-minimum entries */
-        let dataViews = options.dataViews;    
+        let dataViews = options.dataViews;
         console.log('Test 1: Valid data view...');
         if (!dataViews
             || !dataViews[0]
@@ -77,98 +78,100 @@ export class Visual implements IVisual {
             console.log('Test 1 FAILED. No data to draw table.');
             return;
         }
-    
-    /** If we get this far, we can trust that we can work with the data! */
+
+        /** If we get this far, we can trust that we can work with the data! */
         let table = dataViews[0].table;
-        
-    /** Only show the table if we want to - perf. gets a bit unpredictable with a lot of data */
+
+        /** Only show the table if we want to - perf. gets a bit unpredictable with a lot of data */
         if (this.settings.table.show) {
 
-                let domTable = this.tablecontainer.append('table');
+            let domTable = this.tablecontainer.append('table');
 
             /** Add table heading row and columns */
-                let tHead = domTable
-                    .append('tr');
+            let tHead = domTable
+                .append('tr');
 
-                table.columns.forEach(
-                    (col) => {
-                        tHead
-                            .append('th')
-                                .text(col.displayName);
-                    }
-                );
+            table.columns.forEach(
+                (col) => {
+                    tHead
+                        .append('th')
+                        .text(col.displayName);
+                }
+            );
 
             /** Now add rows and columns for each row of data */
-                table.rows.forEach(
-                    (row) => {
-                        let tRow = domTable
-                            .append('tr');
-                        row.forEach(
-                            (col) => {
-                                if (col) {
-                                    tRow
-                                        .append('td')
-                                            .text(col.toString())
-                                } else {
-                                    tRow
-                                        .append('td')
-                                            .text("")}
+            table.rows.forEach(
+                (row) => {
+                    let tRow = domTable
+                        .append('tr');
+                    row.forEach(
+                        (col) => {
+                            if (col) {
+                                tRow
+                                    .append('td')
+                                    .text(col.toString())
+                            } else {
+                                tRow
+                                    .append('td')
+                                    .text("")
                             }
-                        )
-                    }
-                );
-                console.log('Table rendered!');
+                        }
+                    )
+                }
+            );
+            console.log('Table rendered!');
         }
-    
-// Button
+
+        // Button
         let dButton = d3select.select('#bDownload')
             .attr('type', "submit")
             .attr('value', "Download CSV")
-        .on ('click' , function(){
-            let headers = []
-            table.columns.forEach(
-                (col) => {
-                    headers.push(col.displayName);
-                })
-            let downloadtable = []
-            downloadtable.push(headers)
+            .on('click', function () {
+                console.log("download button click");
+                let headers = []
+                table.columns.forEach(
+                    (col) => {
+                        headers.push(col.displayName);
+                    })
+                let downloadtable = []
+                downloadtable.push(headers)
+
+                table.rows.forEach(
+                    (row) => {
+                        downloadtable.push(row)
+                    }
+                )
+
+                //let download = JSON.stringify(downloadtable);
+                let downloaddata = ConvertToCSV(downloadtable)
+                //let blob = new Blob([downloaddata], { type: "text/plain;charset=utf-8" });
+                console.log('Attempt Save!');
+                Visual.downloadService.exportVisualsContent(downloaddata, "pbidownload.csv", "csv","csv file");
             
-            table.rows.forEach(
-                (row) => {
-                    downloadtable.push(row)
+            });
+        // JSON to CSV Converter
+        function ConvertToCSV(objArray) {
+            let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+            let str = '';
+
+            for (let i = 0; i < array.length; i++) {
+                let line = '';
+                for (var index in array[i]) {
+                    if (line != '') line += ','
+
+                    line += array[i][index];
                 }
-            )
-            
-            //let download = JSON.stringify(downloadtable);
-            let download = ConvertToCSV(downloadtable)
-            let blob = new Blob([download], {type: "text/plain;charset=utf-8"});
-            console.log('Attempt Save!');
-            saveAs(blob, "pbidownload.csv");
-            
-        });
-     // JSON to CSV Converter
-     function ConvertToCSV(objArray) {
-        let array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
-        let str = '';
 
-        for (let i = 0; i < array.length; i++) {
-            let line = '';
-            for (var index in array[i]) {
-                if (line != '') line += ','
-
-                line += array[i][index];
+                str += line + '\r\n';
             }
 
-            str += line + '\r\n';
+            return str;
         }
 
-        return str;
-    }   
-        
     }
 
     private static parseSettings(dataView: DataView): VisualSettings {
-        return <VisualSettings>VisualSettings.parse(dataView);
+        return VisualSettings.parse(dataView);
     }
 
     /**
