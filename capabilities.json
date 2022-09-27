@@ -1,4 +1,10 @@
 {
+    "privileges": [
+        {
+            "name": "ExportContent",
+            "essential": true
+        }
+    ],
     "dataRoles": [
         {
             "name": "values",
